@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun:*)",
+      "Bash(bunx:*)",
+      "Bash(mkdir -p:*)",
+      "Bash(docker:*)",
+      "Bash(chmod +x:*)"
+    ]
+  },
+  "enabledPlugins": {
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun .claude/dynamic-skills/render.ts"
+          }
+        ]
+      }
+    ]
+  }
+}
