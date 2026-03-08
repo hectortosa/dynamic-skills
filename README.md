@@ -2,7 +2,7 @@
 
 Prompt templates that adapt based on your environment before the agent even sees them.
 
-A hook intercepts your prompt, runs detection logic (shell commands, file reads, env vars), and renders a [Nunjucks](https://mozilla.github.io/nunjucks/) template with conditional blocks. The agent only receives the instructions that matter for your setup.
+A hook intercepts your prompt, runs detection logic (file reads, env vars, preferences), and renders a [Nunjucks](https://mozilla.github.io/nunjucks/) template with conditional blocks. The agent only receives the instructions that matter for your setup.
 
 ## How it works
 
@@ -72,23 +72,15 @@ Injects the project's PR template directly into the agent's instructions via `fi
 
 The agent doesn't need to search for or read the template. It's already there.
 
-## Experiment: dynamic skill vs static skill
+## Why dynamic skills
 
-Both skills create a pull request for the current branch. The static skill (`/create-pr-basic`) tells the agent to find and read the PR template. The dynamic skill (`#create-pr`) injects the template content at hook time.
+The main value is **personalization and adaptability**. The same skill can behave differently based on:
 
-Same task, same repo, same model (Claude Opus 4.6):
+- User preferences (timezone, language, coding style)
+- Environment variables (container runtime, shell, OS)
+- Project files (templates, configs, conventions)
 
-| Metric | Static skill | Dynamic skill | Savings |
-|---|---|---|---|
-| **Total time** | 28.1s | 24.8s | -11.8% |
-| **API time** | 25.5s | 21.4s | -16.3% |
-| **Turns** | 10 | 6 | -40.0% |
-| **Output tokens** | 1,176 | 928 | -21.1% |
-| **Cache read tokens** | 61,390 | 46,534 | -24.2% |
-| **Cache creation tokens** | 6,227 | 3,338 | -46.4% |
-| **Cost** | $0.099 | $0.067 | -32.0% |
-
-The static skill spends extra turns discovering and reading the PR template. The dynamic skill skips that entirely. For a single file injection, that's a 32% cost reduction. The savings compound with skills that need to discover multiple files, detect environment state, or aggregate context from several sources.
+In benchmarks comparing a dynamic `#create-pr` skill against a static `/create-pr-basic` skill (10 runs each, Claude Opus 4.6), the dynamic skill consistently used fewer turns (8 vs 9 on average). Time and cost differences were minimal for this small repo, but the turn reduction grows with larger codebases where the agent needs multiple steps to discover the same context that a dynamic skill injects upfront.
 
 ## Project structure
 
