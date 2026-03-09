@@ -102,12 +102,91 @@ In benchmarks comparing a dynamic `#create-pr` skill against a static `/create-p
 └── PULL_REQUEST_TEMPLATE.md   # PR template (injected by #create-pr)
 ```
 
-## Setup
+## Installation
 
-Requires [Bun](https://bun.sh/) and the `nunjucks` package:
+Follow these steps to add the dynamic skills system to your own project.
+
+### Requirements
+
+- [Bun](https://bun.sh/) runtime
+- The `nunjucks` package (`bun add nunjucks`)
+
+### Step 1 — Create the `dynamic-skills` folder
+
+```bash
+mkdir -p .claude/dynamic-skills
+```
+
+### Step 2 — Copy the renderer
+
+Copy `render.ts` into `.claude/dynamic-skills/`. This is the script that intercepts prompts, detects `#skill-name` patterns, and renders the matching Nunjucks templates.
+
+```bash
+cp /path/to/render.ts .claude/dynamic-skills/render.ts
+```
+
+Or create it manually — see [`render.ts`](.claude/dynamic-skills/render.ts) in this repo for the full source.
+
+### Step 3 — Create a preferences file
+
+Create `.claude/dynamic-skills/preferences.json` with an empty object (or with any default preferences your skills will use):
+
+```json
+{}
+```
+
+### Step 4 — Register the hook in `settings.json`
+
+Add the `UserPromptSubmit` hook to your `.claude/settings.json` so the renderer runs on every prompt:
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun .claude/dynamic-skills/render.ts"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Step 5 — Install the dependency
 
 ```bash
 bun add nunjucks
 ```
 
-The hook is configured in `.claude/settings.json` to run `render.ts` on every `UserPromptSubmit` event.
+### Step 6 — Create your first skill
+
+Create a directory under `.claude/dynamic-skills/` with a `template.njk` file:
+
+```bash
+mkdir -p .claude/dynamic-skills/my-skill
+```
+
+```njk
+{# .claude/dynamic-skills/my-skill/template.njk #}
+Your instructions here. Use {{ env.USER }} for env vars,
+{{ preference_name }} for preferences, or {{ file_var }} for file contents.
+```
+
+Optionally add a `files.json` to inject project file contents into the template:
+
+```json
+{
+  "file_var": "relative/path/to/file.md"
+}
+```
+
+Invoke the skill by typing `#my-skill` in any prompt.
+
+### Scaffolding new skills
+
+This project includes a `/dynamic-skills` skill that walks you through creating a new dynamic skill interactively — it sets up the folder structure, `template.njk`, `files.json`, and `preferences.json` entries for you.
